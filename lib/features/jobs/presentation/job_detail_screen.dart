@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_widget_from_html_core/flutter_widget_from_html_core.dart';
+import 'package:html/parser.dart' as html_parser;
 import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'package:mywork/core/utils/currency.dart';
 import 'package:mywork/core/widgets/app_loader.dart';
@@ -11,6 +14,18 @@ import 'package:mywork/features/favorites/application/favorites_providers.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:mywork/features/jobs/application/offres_providers.dart';
+
+/// Scraped/imported offers are sometimes truncated mid-tag (e.g. an `<a
+/// href="...">` cut off with no closing `>`, often ending in an ellipsis).
+/// Drop that dangling fragment so the HTML parser doesn't choke on it.
+String _sanitizeTruncatedHtml(String html) {
+  final lastOpen = html.lastIndexOf('<');
+  final lastClose = html.lastIndexOf('>');
+  if (lastOpen > lastClose) {
+    return html.substring(0, lastOpen).trimRight();
+  }
+  return html;
+}
 
 class JobDetailScreen extends ConsumerWidget {
   const JobDetailScreen({super.key, required this.offreId});
@@ -86,7 +101,27 @@ class JobDetailScreen extends ConsumerWidget {
                   const SizedBox(height: 24),
                   Text('Description', style: Theme.of(context).textTheme.titleSmall),
                   const SizedBox(height: 8),
-                  Text(offre.description ?? 'Aucune description fournie.'),
+                  Builder(builder: (context) {
+                    final raw = offre.description?.trim() ?? '';
+                    if (raw.isEmpty) {
+                      return const Text('Aucune description fournie.');
+                    }
+                    final sanitized = _sanitizeTruncatedHtml(raw);
+                    final hasVisibleText =
+                        html_parser.parse(sanitized).documentElement?.text.trim().isNotEmpty ?? false;
+                    if (!hasVisibleText) {
+                      return const Text("Description non disponible pour cette offre.");
+                    }
+                    return HtmlWidget(
+                      sanitized,
+                      textStyle: Theme.of(context).textTheme.bodyMedium,
+                      onTapUrl: (url) async {
+                        final uri = Uri.tryParse(url);
+                        if (uri == null) return false;
+                        return launchUrl(uri, mode: LaunchMode.externalApplication);
+                      },
+                    );
+                  }),
                 ],
               ),
               Positioned(
