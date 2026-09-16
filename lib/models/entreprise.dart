@@ -42,7 +42,7 @@ class Entreprise {
       ville: map['ville'] as String?,
       description: map['description'] as String?,
       verificationStatut: map['verification_statut'] as String?,
-      numeroPublic: map['numero_public'] as String?,
+      numeroPublic: map['numero_public']?.toString(),
       compteStatut: map['compte_statut'] as String?,
     );
   }

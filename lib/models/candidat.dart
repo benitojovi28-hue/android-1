@@ -57,7 +57,7 @@ class Candidat {
       noteMoyenne: map['note_moyenne'] as num?,
       nbAvis: map['nb_avis'] as int?,
       scoreCompletude: map['score_completude'] as int?,
-      numeroPublic: map['numero_public'] as String?,
+      numeroPublic: map['numero_public']?.toString(),
       compteStatut: map['compte_statut'] as String?,
     );
   }
