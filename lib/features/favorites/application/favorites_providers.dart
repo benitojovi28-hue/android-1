@@ -15,3 +15,9 @@ final favoritesRepositoryProvider = Provider<FavoritesRepository>((ref) {
 
 /// Bump to force widgets watching favorite status to rebuild after a toggle.
 final favoritesVersionProvider = StateProvider<int>((ref) => 0);
+
+final favoriteCompaniesProvider =
+    FutureProvider.autoDispose.family<List<Map<String, dynamic>>, String>((ref, candidatId) {
+  ref.watch(favoritesVersionProvider);
+  return ref.watch(favoritesRepositoryProvider).favoriteCompanies(candidatId);
+});

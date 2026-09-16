@@ -128,16 +128,40 @@ class JobDetailScreen extends ConsumerWidget {
                 left: 16,
                 right: 16,
                 bottom: 16,
-                child: ElevatedButton(
-                  onPressed: () async {
-                    if (user == null) {
-                      context.push('/auth');
-                      return;
-                    }
-                    await showApplySheet(context, offreId: offre.id);
-                  },
-                  child: const Text('POSTULER'),
-                ),
+                // Offers with no entrepriseId weren't posted by a registered
+                // recruiter account (e.g. imported from an external feed) —
+                // there's no one on MyWork to receive an in-app candidature,
+                // so don't let candidates believe they successfully applied.
+                child: offre.entrepriseId == null
+                    ? Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.info_outline, size: 20, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                "Cette offre provient d'une source externe. Consultez l'annonce originale pour postuler.",
+                                style: Theme.of(context).textTheme.bodySmall,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    : ElevatedButton(
+                        onPressed: () async {
+                          if (user == null) {
+                            context.push('/auth');
+                            return;
+                          }
+                          await showApplySheet(context, offreId: offre.id);
+                        },
+                        child: const Text('POSTULER'),
+                      ),
               ),
             ],
           );

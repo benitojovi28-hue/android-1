@@ -18,12 +18,26 @@ class FavoritesRepository {
 
   Future<void> toggleOfferFavorite(String offreId) => _localStore.toggle(offreId);
 
+  /// `recruteur_id` stores the recruiter's auth user id, and `entreprises`
+  /// has no direct foreign key to `candidat_favoris` for PostgREST to embed
+  /// (it only relates via `entreprises.user_id`) — so this fetches the two
+  /// tables separately and joins them client-side instead of relying on an
+  /// embedded-resource select, which throws PGRST200 for this pair.
   Future<List<Map<String, dynamic>>> favoriteCompanies(String candidatId) async {
-    final rows = await _client
+    final favRows = await _client
         .from('candidat_favoris')
-        .select('recruteur_id, entreprise:entreprises(id,nom,logo_url,secteur,ville)')
+        .select('recruteur_id')
         .eq('candidat_id', candidatId);
-    return (rows as List).cast<Map<String, dynamic>>();
+    final recruteurIds = (favRows as List).map((r) => r['recruteur_id'] as String).toList();
+    if (recruteurIds.isEmpty) return [];
+
+    final entreprises = await _client
+        .from('entreprises')
+        .select('id,user_id,nom,logo_url,secteur,ville')
+        .inFilter('user_id', recruteurIds);
+    return (entreprises as List)
+        .map((e) => {'recruteur_id': e['user_id'], 'entreprise': e as Map<String, dynamic>})
+        .toList();
   }
 
   Future<void> toggleCompanyFavorite({required String candidatId, required String recruteurId}) async {

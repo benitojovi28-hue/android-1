@@ -94,4 +94,24 @@ void main() {
 
     expect(find.text('Offre introuvable'), findsOneWidget);
   });
+
+  group('JobDetailScreen apply action', () {
+    testWidgets('shows the POSTULER button for an offer with a real entreprise account', (tester) async {
+      final offre = Offre(id: 'offre-1', entrepriseId: 'ent-1', titre: 'Développeur');
+
+      await pumpDetail(tester, offre);
+
+      expect(find.text('POSTULER'), findsOneWidget);
+      expect(find.textContaining('source externe'), findsNothing);
+    });
+
+    testWidgets('replaces POSTULER with a source-externe notice when entrepriseId is null', (tester) async {
+      final offre = Offre(id: 'offre-1', titre: 'Développeur');
+
+      await pumpDetail(tester, offre);
+
+      expect(find.text('POSTULER'), findsNothing);
+      expect(find.textContaining('source externe'), findsOneWidget);
+    });
+  });
 }

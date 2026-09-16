@@ -61,11 +61,11 @@ class FavoritesScreen extends ConsumerWidget {
                 if (profile == null) {
                   return const EmptyState(icon: Icons.business_outlined, title: 'Aucune entreprise favorite');
                 }
-                return FutureBuilder<List<Map<String, dynamic>>>(
-                  future: favoritesRepo.favoriteCompanies(profile.id),
-                  builder: (context, snapshot) {
-                    if (!snapshot.hasData) return const AppLoader();
-                    final companies = snapshot.data!;
+                final companiesAsync = ref.watch(favoriteCompaniesProvider(profile.id));
+                return companiesAsync.when(
+                  loading: () => const AppLoader(),
+                  error: (e, _) => const Text('Erreur de chargement'),
+                  data: (companies) {
                     if (companies.isEmpty) {
                       return const EmptyState(icon: Icons.business_outlined, title: 'Aucune entreprise favorite');
                     }

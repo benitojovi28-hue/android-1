@@ -16,6 +16,11 @@ final myCandidateProfileProvider = FutureProvider.autoDispose<Candidat?>((ref) {
   return ref.watch(candidateProfileRepositoryProvider).myProfile();
 });
 
+final cvNumeriqueProvider =
+    FutureProvider.autoDispose.family<Map<String, dynamic>?, String>((ref, candidatId) {
+  return ref.watch(candidateProfileRepositoryProvider).myCvNumerique(candidatId);
+});
+
 final alertsRepositoryProvider = Provider<AlertsRepository>((ref) {
   return AlertsRepository(ref.watch(supabaseProvider));
 });
