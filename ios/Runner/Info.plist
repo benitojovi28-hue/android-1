@@ -37,7 +37,7 @@
 				<string>Editor</string>
 				<key>CFBundleURLSchemes</key>
 				<array>
-					<string>REPLACE_WITH_REVERSED_GOOGLE_IOS_CLIENT_ID</string>
+					<string>com.googleusercontent.apps.976085372569-irtrh5uis7gskvh2kkj435lu0mhgpde1</string>
 				</array>
 			</dict>
 		</array>
