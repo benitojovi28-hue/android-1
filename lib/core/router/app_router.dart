@@ -47,6 +47,43 @@ const _authRoutes = {
   '/entreprises/inscription',
 };
 
+/// Routes an already-authenticated user (with a resolved role) should be
+/// bounced away from if they land on them — e.g. after using the back
+/// button. Deliberately narrower than [_authRoutes]: `/inscription` and
+/// `/entreprises/inscription` also need to stay reachable *while signed
+/// in* (from "Devenir recruteur" and the role==unknown "choisir espace"
+/// flow), so they must not be in this set even though they're public
+/// pre-auth routes too.
+const _signedInRedirectRoutes = {
+  '/bienvenue',
+  '/auth',
+  '/reset-password',
+};
+
+/// Pure decision function behind the router's `redirect` callback — kept
+/// separate from GoRouter/Riverpod wiring so it's unit-testable directly.
+/// Returns the path to redirect to, or null to allow navigation as-is.
+String? resolveAppRedirect({required bool isAuthenticated, required Role? role, required String loc}) {
+  if (!isAuthenticated) {
+    if (loc == '/splash' || !_authRoutes.contains(loc)) return '/bienvenue';
+    return null;
+  }
+
+  if (role == null) {
+    return loc == '/splash' ? null : '/splash';
+  }
+
+  if (role == Role.unknown) {
+    const allowedWhileUnknown = {'/choisir-espace', '/inscription', '/entreprises/inscription'};
+    return allowedWhileUnknown.contains(loc) ? null : '/choisir-espace';
+  }
+
+  if (loc == '/splash' || _signedInRedirectRoutes.contains(loc)) {
+    return homePathForRole(role);
+  }
+  return null;
+}
+
 final routerProvider = Provider<GoRouter>((ref) {
   final refresh = _RouterRefreshNotifier(ref);
   ref.onDispose(refresh.dispose);
@@ -56,26 +93,8 @@ final routerProvider = Provider<GoRouter>((ref) {
     refreshListenable: refresh,
     redirect: (context, state) {
       final user = ref.read(currentUserProvider);
-      final loc = state.matchedLocation;
-
-      if (user == null) {
-        if (loc == '/splash' || !_authRoutes.contains(loc)) return '/bienvenue';
-        return null;
-      }
-
       final role = ref.read(roleProvider).valueOrNull;
-      if (role == null) {
-        return loc == '/splash' ? null : '/splash';
-      }
-
-      if (role == Role.unknown) {
-        return loc == '/choisir-espace' ? null : '/choisir-espace';
-      }
-
-      if (loc == '/splash' || _authRoutes.contains(loc)) {
-        return homePathForRole(role);
-      }
-      return null;
+      return resolveAppRedirect(isAuthenticated: user != null, role: role, loc: state.matchedLocation);
     },
     routes: [
       GoRoute(path: '/splash', builder: (context, state) => const SplashScreen()),
