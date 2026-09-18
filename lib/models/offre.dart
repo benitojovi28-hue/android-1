@@ -20,6 +20,7 @@ class Offre {
     this.dateExpiration,
     this.statut,
     this.nombrePostes,
+    this.sourceUrl,
   });
 
   final String id;
@@ -42,6 +43,7 @@ class Offre {
   final DateTime? dateExpiration;
   final String? statut;
   final int? nombrePostes;
+  final String? sourceUrl;
 
   factory Offre.fromMap(Map<String, dynamic> map) {
     return Offre(
@@ -69,6 +71,7 @@ class Offre {
           : null,
       statut: map['statut'] as String?,
       nombrePostes: map['nombre_postes'] as int?,
+      sourceUrl: map['source_url'] as String?,
     );
   }
 }

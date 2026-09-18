@@ -139,16 +139,38 @@ class JobDetailScreen extends ConsumerWidget {
                           color: Theme.of(context).colorScheme.surfaceContainerHighest,
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: Row(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Icon(Icons.info_outline, size: 20, color: Theme.of(context).colorScheme.onSurfaceVariant),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Text(
-                                "Cette offre provient d'une source externe. Consultez l'annonce originale pour postuler.",
-                                style: Theme.of(context).textTheme.bodySmall,
-                              ),
+                            Row(
+                              children: [
+                                Icon(Icons.info_outline, size: 20, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    "Cette offre provient d'une source externe. Consultez l'annonce originale pour postuler.",
+                                    style: Theme.of(context).textTheme.bodySmall,
+                                  ),
+                                ),
+                              ],
                             ),
+                            if (offre.sourceUrl != null) ...[
+                              const SizedBox(height: 10),
+                              SizedBox(
+                                width: double.infinity,
+                                child: FilledButton.icon(
+                                  onPressed: () async {
+                                    final uri = Uri.tryParse(offre.sourceUrl!);
+                                    if (uri != null) {
+                                      await launchUrl(uri, mode: LaunchMode.externalApplication);
+                                    }
+                                  },
+                                  icon: const Icon(Icons.open_in_new, size: 18),
+                                  label: const Text("Voir l'annonce originale"),
+                                ),
+                              ),
+                            ],
                           ],
                         ),
                       )
