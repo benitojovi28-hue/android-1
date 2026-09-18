@@ -39,7 +39,13 @@ dependencies:
   uuid: ^4.6.0
 
   # Social sign-in
-  google_sign_in: ^7.1.0
+  # Pinned to the pre-Credential-Manager legacy API (7.x's Credential
+  # Manager-based flow hits a widely-reported, unresolved upstream bug —
+  # GoogleSignInException [28444] "Developer console is not set up
+  # correctly" — that fires right after account selection even with a
+  # verified-correct Cloud Console setup: github.com/flutter/flutter/issues,
+  # ionic-team/capacitor#8444, Cap-go/capacitor-social-login#422).
+  google_sign_in: ^6.3.0
   sign_in_with_apple: ^7.0.1
   crypto: ^3.0.6
   flutter_widget_from_html_core: ^0.17.4

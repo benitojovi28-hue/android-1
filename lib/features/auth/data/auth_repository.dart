@@ -4,6 +4,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'package:mywork/core/env/env.dart';
 import 'package:mywork/core/utils/nonce.dart';
 
 class AuthRepository {
@@ -51,17 +52,31 @@ class AuthRepository {
     return _client.auth.updateUser(UserAttributes(password: newPassword));
   }
 
-  /// Native Google Sign-In → Supabase session, via GoogleSignIn.instance
-  /// (initialized once in main()) and Supabase's signInWithIdToken.
+  /// Native Google Sign-In → Supabase session, via the legacy (pre-Credential
+  /// Manager) GoogleSignIn API and Supabase's signInWithIdToken. Deliberately
+  /// NOT using google_sign_in 7.x's Credential Manager-based
+  /// GoogleSignIn.instance.authenticate() — that path hits a widely-reported,
+  /// unresolved upstream bug (GoogleSignInException [28444] "Developer
+  /// console is not set up correctly", fired right after account selection
+  /// even with a verified-correct Cloud Console setup).
   Future<AuthResponse> signInWithGoogle() async {
-    final account = await GoogleSignIn.instance.authenticate();
-    final idToken = account.authentication.idToken;
+    final googleSignIn = GoogleSignIn(
+      clientId: Platform.isIOS ? Env.googleIosClientId : null,
+      serverClientId: Env.googleServerClientId,
+    );
+    final account = await googleSignIn.signIn();
+    if (account == null) {
+      throw Exception('Connexion Google annulée.');
+    }
+    final auth = await account.authentication;
+    final idToken = auth.idToken;
     if (idToken == null) {
       throw Exception("Impossible de récupérer le jeton d'identité Google.");
     }
     return _client.auth.signInWithIdToken(
       provider: OAuthProvider.google,
       idToken: idToken,
+      accessToken: auth.accessToken,
     );
   }
 
