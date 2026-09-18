@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -18,6 +20,7 @@ class JobSearchScreen extends ConsumerStatefulWidget {
 class _JobSearchScreenState extends ConsumerState<JobSearchScreen> {
   final _searchController = TextEditingController();
   final _scrollController = ScrollController();
+  Timer? _debounce;
 
   @override
   void initState() {
@@ -27,6 +30,7 @@ class _JobSearchScreenState extends ConsumerState<JobSearchScreen> {
 
   @override
   void dispose() {
+    _debounce?.cancel();
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     _searchController.dispose();
@@ -37,6 +41,24 @@ class _JobSearchScreenState extends ConsumerState<JobSearchScreen> {
     if (_scrollController.position.pixels > _scrollController.position.maxScrollExtent - 300) {
       ref.read(jobSearchProvider.notifier).loadMore();
     }
+  }
+
+  void _search(String q) {
+    _debounce?.cancel();
+    final filters = ref.read(jobSearchProvider).filters;
+    ref.read(jobSearchProvider.notifier).applyFilters(filters.copyWith(query: q));
+  }
+
+  void _onQueryChanged(String q) {
+    setState(() {}); // toggle the clear button's visibility
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 400), () => _search(q));
+  }
+
+  void _clearQuery() {
+    _searchController.clear();
+    _search('');
+    setState(() {});
   }
 
   @override
@@ -64,15 +86,18 @@ class _JobSearchScreenState extends ConsumerState<JobSearchScreen> {
             padding: const EdgeInsets.all(16),
             child: TextField(
               controller: _searchController,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 hintText: 'Rechercher un poste, un métier...',
-                prefixIcon: Icon(Icons.search),
+                prefixIcon: const Icon(Icons.search),
+                suffixIcon: _searchController.text.isEmpty
+                    ? null
+                    : IconButton(
+                        icon: const Icon(Icons.clear),
+                        onPressed: _clearQuery,
+                      ),
               ),
-              onSubmitted: (q) {
-                ref.read(jobSearchProvider.notifier).applyFilters(
-                      state.filters.copyWith(query: q),
-                    );
-              },
+              onChanged: _onQueryChanged,
+              onSubmitted: _search,
             ),
           ),
           Expanded(
